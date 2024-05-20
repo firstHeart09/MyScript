@@ -1,0 +1,78 @@
+该脚本使用教程
+"""
+命令：python gem5Mess_v3.py --binary=你的路径
+注意：
+1. --binary一定要指定
+2. 可以通过命令 python gem5Mess_v3.py -h  查看帮助选项如下：
+    options:
+    -h, --help            show this help message and exit
+    --cacheline_size [CACHELINE_SIZE]
+                            The size of cacheline. default 64B
+    --binary BINARY       The path of the exec file
+    --state [STATE]       The state of the executable file, if not specified, will be affected during visualization (static and
+                            dynamic file visualization results are different)
+    --outputfile_path [OUTPUTFILE_PATH]
+                            Output file directory, default: m5out
+    --visualfile_dir [VISUALFILE_DIR]
+                            Visual results output directory
+    --is_show_rate [IS_SHOW_RATE]
+                            Whether to display the miss rate and hit rate in the terminal
+3. --state选项指定与否不影响结果，只会对输出信息的命名有影响
+4. 默认输出结果命名为：dynamic_filename.txt   如果指定使用--state=static 则输出结果命名为static_filename.txt
+"""
+
+版本一：
+格式：字典
+instrution{instruction: ['', '', 0, 0, 0]}
+指令                 所在cache line    虚拟地址转为物理地址 该指令是否在cache中   Miss    Hit
+0x1198@push rbp       [1180:11bf]      0x11800 -> 0x1180       1->2               0       0
+
+格式：字典  保存cacheline的地址信息，状态以及虚拟地址转换为物理地址（当前cacheline所在的虚拟地址）
+cacheline_dict_hit{cacheline: ['0->1', '0x -> cacheline']}
+cacheline物理地址范围     cacheline状态   cacheline所在物理地址
+
+# 处理整个调试信息文件的步骤（主要是调试指令）
+1.  初始化指令的所有状态  ['', '', 0, 0, 0],
+    初始化虚拟地址向物理地址转换的信息
+    初始化初始化cacheline的详细信息，包括cacheline当前的状态与虚拟地址向物理地址转换的信息
+2.  判断是否有 IF miss 产生，如果有则找到该cache line的地址范围，并初始化cache line的状态为0->1
+    通过列表，取出被映射到物理地址的物理值，更新cacheline的映射状态
+3.  判断是否有 Block for addr being updated in Cache 产生，如果有则计算最近加载到cache中的cache line的地址范围
+4.  判断是否有 Replacement victim: state 出现，如果有保存即将替换进cache中的 cache line 的信息
+5.  判断是否有 Create CleanEvict CleanEvict 出现，如果有则判断被替换的cache line是否在cache中，有则修改该cache line的状态为2->0
+6.  判断是否有 moving from  to state 出现，如果有则将即将替换进cache中的cache line的状态修改为1->2
+7.  判断是否有 system.cpu: T0 出现，如果有则说明当前处理的是指令，取出cacheline状态信息中的虚拟地址值与物理地址值，
+    将该虚拟地址值与物理地址值分别加上cacheline的大小，判断当前指令是否在上述范围中，如果在则更新instruction的信息。
+    注意：这里需要通过cacheline的状态判断处理的是否为当前cacheline中的第一条指令（cacheline状态为1->2），如果是，指令的miss数加一，更新cacheline
+    的状态到2->2，则说明当前指令不是当前cacheline的第一条指令，更新当前指令的hit数加一
+
+
+# cacheline_dict_hit[cacheline]状态
+0->1  表明当前cacheline准备加载
+1->2  表明当前cacheline刚被加载进来，后面要处理的指令是该cache line的第一条指令
+2->2  表明当前cacheline已经加载进来一会了（已经处理了该cache line的第一条指令，后面处理的是该cacheline的其他指令）
+2->0  表明当前cacheline已经被替换出去
+
+Miss: 每当该cache被访问的时候，如果IF Miss，则后面所有的指令都属于该cache line，所有指令的  Miss数 + 1
+Hit： 每当该cache被替换，然后当该cache下一次被命中时，查看对应指令，然后该指令的  Hit数量 + 1
+
+
+版本二：
+在版本一基础上新增以下内容：
+self.icache_cacheline[icache_address] = [0, 0]  # icache信息
+cacheline地址范围   miss   Hit
+[1180:11bf]         0      0
+
+miss：只有当moving from  to state出现时，cacheline的miss+1
+hit：只有当if hit出现的时候，cacheline的hit数+1
+
+在版本基础上删除了指令inst中的cacheline状态
+格式：字典
+instrution{instruction: ['', '', 0, 0]}
+指令                 所在cache line    虚拟地址转为物理地址    Miss    Hit
+0x1198@push rbp       [1180:11bf]      0x11800 -> 0x1180      0       0
+
+
+版本三：
+在此基础上完成了可视化，将可视化生成文件的路径作为参数，在命令行中使用
+在终端上通过判断参数is_show_rate的值，判断是否在终端上显示最后统计结果
