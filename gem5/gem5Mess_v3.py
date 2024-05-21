@@ -90,7 +90,7 @@ class Gem5DebugMess:
         self.read_from_debug()
         # # 使用 lambda 函数提取冒号前面的数字作为排序的关键字，进行排序
         self.sort_list = sorted(self.data, key=lambda x: int(x.split(':')[0]))
-        # self.write_to_file(self.sort_list, 'sort.txt')
+        self.write_to_file(self.sort_list, 'sort.txt')
         # 删除其他不需要的信息
         self.delete_list = delete_other(self.sort_list)
         # 删除关于指令扩写的部分
