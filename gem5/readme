@@ -21,16 +21,6 @@
 4. 默认输出结果命名为：dynamic_filename.txt   如果指定使用--state=static 则输出结果命名为static_filename.txt
 """
 
-版本一：
-格式：字典
-instrution{instruction: ['', '', 0, 0, 0]}
-指令                 所在cache line    虚拟地址转为物理地址 该指令是否在cache中   Miss    Hit
-0x1198@push rbp       [1180:11bf]      0x11800 -> 0x1180       1->2               0       0
-
-格式：字典  保存cacheline的地址信息，状态以及虚拟地址转换为物理地址（当前cacheline所在的虚拟地址）
-cacheline_dict_hit{cacheline: ['0->1', '0x -> cacheline']}
-cacheline物理地址范围     cacheline状态   cacheline所在物理地址
-
 # 处理整个调试信息文件的步骤（主要是调试指令）
 1.  初始化指令的所有状态  ['', '', 0, 0, 0],
     初始化虚拟地址向物理地址转换的信息
@@ -46,7 +36,6 @@ cacheline物理地址范围     cacheline状态   cacheline所在物理地址
     注意：这里需要通过cacheline的状态判断处理的是否为当前cacheline中的第一条指令（cacheline状态为1->2），如果是，指令的miss数加一，更新cacheline
     的状态到2->2，则说明当前指令不是当前cacheline的第一条指令，更新当前指令的hit数加一
 
-
 # cacheline_dict_hit[cacheline]状态
 0->1  表明当前cacheline准备加载
 1->2  表明当前cacheline刚被加载进来，后面要处理的指令是该cache line的第一条指令
@@ -57,22 +46,19 @@ Miss: 每当该cache被访问的时候，如果IF Miss，则后面所有的指�
 Hit： 每当该cache被替换，然后当该cache下一次被命中时，查看对应指令，然后该指令的  Hit数量 + 1
 
 
-版本二：
-在版本一基础上新增以下内容：
-self.icache_cacheline[icache_address] = [0, 0]  # icache信息
-cacheline地址范围   miss   Hit
-[1180:11bf]         0      0
-
-miss：只有当moving from  to state出现时，cacheline的miss+1
-hit：只有当if hit出现的时候，cacheline的hit数+1
-
-在版本基础上删除了指令inst中的cacheline状态
 格式：字典
 instrution{instruction: ['', '', 0, 0]}
 指令                 所在cache line    虚拟地址转为物理地址    Miss    Hit
 0x1198@push rbp       [1180:11bf]      0x11800 -> 0x1180      0       0
 
+修改cacheline_dict_hit字典格式
+格式：字典  保存cacheline的地址信息，状态以及虚拟地址转换为物理地址（当前cacheline所在的虚拟地址）
+cacheline_dict_hit{cacheline: ['0->1', '0x -> cacheline']}
+cacheline物理地址范围     cacheline状态   cacheline所在物理地址  
 
-版本三：
-在此基础上完成了可视化，将可视化生成文件的路径作为参数，在命令行中使用
-在终端上通过判断参数is_show_rate的值，判断是否在终端上显示最后统计结果
+
+gem5Mess_v1.py：默认只要有IF miss出现，则该cacheline的第一条指令miss数加一
+                也就是将靠近的时钟周期内的同一个IF miss都算进去
+gem5Mess_v2.py：不将靠近的时钟周期内的同一个IF miss都算进去
+                该计算方法与最后统计的指令数是相同的
+                

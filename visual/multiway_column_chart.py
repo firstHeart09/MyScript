@@ -29,8 +29,8 @@ def visual_portrait():
     height = 0.35  # 条形图的高度，可以根据自己的需求和审美来改
 
     fig, ax = plt.subplots()
-    rects1 = ax.barh(y - height/2, data_num_1, height, label='data_num_1')
-    rects2 = ax.barh(y + height/2, data_num_2, height, label='data_num_2')
+    rects1 = ax.barh(y - height/2, data_num_1, height, label='柱1标志')
+    rects2 = ax.barh(y + height/2, data_num_2, height, label='柱2标志')
 
     # 为x轴、标题和y轴等添加一些文本
     ax.set_xlabel('X轴', fontsize=16)

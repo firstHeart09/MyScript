@@ -1,5 +1,5 @@
 # 本文件对gem5文件夹中的内容做出解释
 - build_gem5_riscv.sh  使用该脚本构建gem5模拟器的riscv环境
 - gem5Mess.sh          使用该脚本提取gem5模拟运行出来的信息
-- gem5Mess_v1.py -- gem5Mess_v3.py  python脚本，完成gem5模拟信息的提取，与gem5Mess.py功能一样
-- readme               对gem5Mess_v1.py至gem5Mess_v3.py版本更新的解释
+- gem5Mess_v1.py -- gem5Mess_v2.py  python脚本，完成gem5模拟信息的提取，与gem5Mess.py功能一样
+- readme               对gem5Mess_v1.py至gem5Mess_v2.py版本更新的解释
