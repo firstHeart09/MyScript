@@ -18,14 +18,10 @@ def my_args():
                         help=f"The size of cacheline. default 64B")
     parser.add_argument("--binary", type=str,
                         help=f"The path of the exec file")
-    parser.add_argument("--state", type=str, default='dynamic', nargs ='?',
-                        help=("The state of the executable file, if not specified, will be affected during visualization (static and dynamic file visualization results are different)"))
     parser.add_argument("--outputfile_path", type=str, default='m5out', nargs ='?',
                         help=("Output file directory, default: m5out"))
     parser.add_argument("--visualfile_dir", type=str, default='visual', nargs ='?',
                         help=("Visual results output directory"))
-    parser.add_argument("--is_show_rate", type=str, default='no', nargs ='?',
-                        help=("Whether to display the miss rate and hit rate in the terminal"))
     options = parser.parse_args()
     return options
 
@@ -53,7 +49,6 @@ def delete_other(data):
 def delete_inst_(data):
     # 删除所有的指令改写部分
     out = []  # 最后的输出数据
-    addr = r''
     for line in data:
         if 'system.cpu: T0 :' in line:
             # 说明该行是指令
@@ -65,13 +60,11 @@ def delete_inst_(data):
                 temp_2 = temp_1.split('+')[1]
                 if temp.isupper() and '.' in temp_2:
                     continue
-
                 else:
                     out.append(line)
             else:
                 if temp.isupper() and '.' in temp_1:
                     continue
-
                 else:
                     out.append(line)
         else:
@@ -79,7 +72,7 @@ def delete_inst_(data):
     return out
 
 class Gem5DebugMess:
-    def __init__(self, read_path, size, state, output_path, visualfile_path, show_rate):
+    def __init__(self, read_path, size, output_path, visualfile_path):
         self.path = read_path  # gem5的debug文件路径
         self.icache_line_size = size if size else '0x3f'  # 设置默认值0x3f
         self.write_path = os.path.abspath(output_path)  # 设置输出目录路径
@@ -90,11 +83,10 @@ class Gem5DebugMess:
         self.icache_cacheline = {}  # 保存cacheline的信息，包括命中与未命中次数
         self.pattern = r'\[([0-9a-fA-F]+):([0-9a-fA-F]+)\]'  # 使用正则表达式匹配 类似[25280:252bf] 的模式
         self.address_pattern = r"0x[0-9a-fA-F]+"
-        self.exec_file_state = state if state else 'dynamic'
         self.func = {}  # 按照函数名对指令进行排序后的信息
         self.visual_path = visualfile_path if visualfile_path else 'function_inst'
-        self.is_show_rate = show_rate if show_rate else 'no'
         self.add = r"Block addr\s+0x([0-9a-fA-F]+)\s+\(ns\)\s+moving\s+from\s+to\s+state:"
+        self.inst_total = {}  # 统计详细信息
 
     def process(self):
         """整个代码的运行控制函数"""
@@ -108,18 +100,29 @@ class Gem5DebugMess:
         self.delete_list = delete_inst_(self.delete_list)
         self.deal_inst(self.delete_list, self.icache_line_size)
         self.total = self.is_show_terminal(self.instruction)
-        self.func = self.separation_function(self.instruction, self.exec_file_state)
+        self.func = self.separation_function(self.instruction)
         self.func_hit_miss = self.count_func_miss_hit(self.func)
-        self.visual(self.func, self.visual_path)
         
-        self.write_to_file(self.sort_list, 'sort.txt')
-        self.write_to_file(self.delete_list, 'sort_delete_L2_L1D.txt')
-        self.write_to_file(self.instruction, 'inst.txt')
+        # 写信息到文件中
+        self.write_to_file(self.func, 'func.txt')
+        self.write_to_file(self.inst_total, 'inst.txt')
         self.write_to_file(self.icache_cacheline, 'cacheline.txt')
-        self.write_to_file(self.total, 'total.txt')
         self.write_to_file(self.func_hit_miss, 'func_miss_hit.txt')
+
+        # 可视化
+        self.visual(self.func, self.visual_path)
+        # self.visual_portrait(self.func_hit_miss, self.visual_path)
         
+
+    def deal_inst_toal(self, data_1, data_2):
+        out = {}
+        for keys, values in data_1.items():
+            out[keys] = values
+        for keys, values in data_2.items():
+            out[keys] = values
+        return out
         
+
     def count_func_miss_hit(self, data):
         # 计算每个函数的指令的hit和miss数
         out = {}
@@ -138,52 +141,32 @@ class Gem5DebugMess:
     # 判断是否在终端显示最后的结果
     def is_show_terminal(self, data):
         out = {}
-        if self.is_show_rate == 'no':
-            return
-        else:
-            miss_total = 0
-            hit_total = 0
-            for keys, values in self.instruction.items():
-                # values = ['', '', 0, 0]
-                miss = int(values[2])
-                hit = int(values[3])
-                miss_total += miss
-                hit_total += hit
-            print('Total miss number: ', miss_total)
-            out['Total miss number: '] = miss_total
-            print('Total hit number: ', hit_total)
-            out['Total hit number: '] = hit_total
-            miss_rate = miss_total/(miss_total+hit_total)
-            hit_rate = hit_total/(miss_total+hit_total)
-            miss_rate_percentage = "{:.5%}".format(miss_rate)
-            hit_rate_percentage = "{:.5%}".format(hit_rate)
-            out['Miss rate: '] = miss_rate_percentage
-            out['Hit rate: '] = hit_rate_percentage
-            print('Miss rate: ', miss_rate_percentage) 
-            print('Hit rate: ', hit_rate_percentage)
-            return out 
+        miss_total = 0
+        hit_total = 0
+        for keys, values in self.instruction.items():
+            # values = ['', '', 0, 0]
+            miss = int(values[2])
+            hit = int(values[3])
+            miss_total += miss
+            hit_total += hit
+        out['Total miss number: '] = miss_total
+        out['Total hit number: '] = hit_total
+        miss_rate = miss_total/(miss_total+hit_total)
+        hit_rate = hit_total/(miss_total+hit_total)
+        miss_rate_percentage = "{:.5%}".format(miss_rate)
+        hit_rate_percentage = "{:.5%}".format(hit_rate)
+        out['Miss rate: '] = miss_rate_percentage
+        out['Hit rate: '] = hit_rate_percentage
+        return out 
         
-    def separation_function(self, data, state):
-        if state == 'dynamic':
-            func = {}
-            for keys, values in data.items():
-                # keys = inst: 0x4014c0 @_start:  hint:
-                # values = ['[14c0:14ff]', '0x4014c0 -> 0x14c0', 1, 0]
-                if '_end' not in keys:
-                    key_func = keys.split('@')[1].split(':', 1)[0].strip().split('+')[0]  # _start
-                    if key_func not in func.keys():
-                        func[key_func] = []
-                    keys_address = keys.split('@')[0].strip()  # 0x4014c0
-                    keys_inst = keys.split(':', 2)[1].strip()  #  hint
-                    func_1 = keys_address + '@' + keys_inst
-                    func_value = [func_1, values[2], values[3]]
-                    func[key_func].append(func_value)
-        else:
-            # 可视化所有函数
-            func = {}  # 保存所有函数中对应的
-            for keys, values in data.items():
-                # keys = inst: 0x4014c0 @_start:  hint:
-                # values = ['[14c0:14ff]', '0x4014c0 -> 0x14c0', 1, 0]
+    def separation_function(self, data):
+        # 可视化所有函数
+        func = {}  # 保存所有函数中对应的
+        for keys, values in data.items():
+            # keys = inst: 0x4014c0 @_start:  hint:
+            # keys = 0x4014c0 @_start:  hint:
+            # values = ['[14c0:14ff]', '0x4014c0 -> 0x14c0', 1, 0]
+            if '_end' not in keys:
                 key_func = keys.split('@')[1].split(':', 1)[0].strip().split('+')[0]  # _start
                 if key_func not in func.keys():
                     func[key_func] = []
@@ -197,10 +180,7 @@ class Gem5DebugMess:
     def visual(self, data, output_dir):
         """
         data: 一个字典，键为函数名，值为包含指令及其对应的miss和hit数量的列表
-        output_dir: 图片保存的文件夹路径，默认为'function_inst'
-        tick_step: x轴刻度步长，默认为1
-        group_gap: 柱子组与组之间的间隙，默认为0.1
-        bar_gap: 每组柱子之间的空隙，默认为0
+        output_dir: 图片保存的文件夹路径
         """
         # 创建保存图片的文件夹
         if not isinstance(output_dir, str):
@@ -218,7 +198,7 @@ class Gem5DebugMess:
             # 设置x轴标签和柱状图的位置
             x = np.arange(len(instructions))
             
-            # 动态调整图的大小，增加图的宽度以增大x轴标签之间的间距
+            # 动态调整图的大小，增加图的高度以增大y轴标签之间的间距
             fig, ax = plt.subplots(figsize=(max(len(instructions) * 0.3, 15), 8))
             
             # 绘制柱状图
@@ -260,6 +240,65 @@ class Gem5DebugMess:
             plt.savefig(os.path.join(output, f'{func_name}.png'))
             plt.close()  # 关闭当前图形，以释放内存
 
+    def autolabel_portrait(self, rects, ax):
+        """
+        Attach a text label above each bar in *rects*, displaying its width.
+        """
+        for rect in rects:
+            width = rect.get_width()
+            ax.annotate('{}'.format(width),
+                        xy=(width, rect.get_y() + rect.get_height() / 2),
+                        xytext=(3, 0),  # 3 points horizontal offset
+                        textcoords="offset points",
+                        ha='left', va='center')
+
+    # 竖屏显示
+    def visual_portrait(self, data, output_dir):
+        """
+        data：待显示的数据，默认按照字典处理
+        output_dir：要保存的可视化的文件路径
+        """
+        # 创建保存图片的文件夹
+        if not isinstance(output_dir, str):
+            raise TypeError("output_dir must be a string")
+        output = os.path.join(self.write_path, output_dir)
+        os.makedirs(output, exist_ok=True)
+        plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+
+        labels = [keys for keys in data.keys()]  # 保存y轴标签的列表
+        data_num_1 = [values[0] for values in data.values()]  # 保存并列的柱状体图中第一列的数据的列表
+        data_num_2 = [values[1] for values in data.values()]  # 保存并列的柱状体图中第二列的数据的列表
+
+        num_functions = len(labels)  # 函数的个数
+        height = max(0.05, min(0.1, 3 / num_functions))  # 动态计算条形图的高度，限制在0.1到1之间
+
+        # 绘制并列柱状图
+        y = np.arange(len(labels))  # 标签位置
+
+        fig, ax = plt.subplots(figsize=(8, num_functions * 0.5))
+        rects1 = ax.barh(y - height/2, data_num_1, height, label='miss')
+        rects2 = ax.barh(y + height/2, data_num_2, height, label='hit')
+
+        # 为x轴、标题和y轴等添加一些文本
+        ax.set_xlabel('num', fontsize=16)
+        ax.set_ylabel('func', fontsize=16)
+        ax.set_title('func_miss_hit')
+        ax.set_yticks(y)  # 设置y轴标签
+        ax.set_yticklabels(labels)  # 设置标签
+        ax.tick_params(axis='y', labelsize=12)  # 设置y轴标签字体大小为12
+        ax.legend()
+
+        # 在rects中的每个条形条上方附加一个文本标签，显示其宽度
+        self.autolabel_portrait(rects1, ax)
+        self.autolabel_portrait(rects2, ax)
+
+        fig.tight_layout()
+        # 保存图片
+        plt.tight_layout()  # 自动调整布局
+        plt.savefig(os.path.join(output, 'func_hit_miss.png'))
+        plt.close()  # 关闭当前图形，以释放内存
+
+
 
     def read_from_debug(self):
         """从debug.txt中读取信息到列表中"""
@@ -269,37 +308,13 @@ class Gem5DebugMess:
 
     def write_to_file(self, data, filename):
         """将最后的结果输出到txt文件中"""
-        filename_final = self.exec_file_state + '_' + filename
-        path = os.path.join(self.write_path, filename_final)
+        path = os.path.join(self.write_path, filename)
         # 确保目录存在
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        if filename == 'inst.txt':
-            # 说明此时要写到文件中的是指令
-            with open(path, 'w') as f_write:
-                for key, value in data.items():
-                    temp = "inst: " + str(key) + ":   " + str(value) + "\n"
-                    f_write.write(temp)
-        elif filename == 'cacheline.txt':
-            # 说明此时要写到文件中的是cacheline
-            with open(path, 'w') as f_write:
-                for key, value in data.items():
-                    temp = str(key) + ":   " + str(value) + "\n"
-                    f_write.write(temp)
-        elif filename == 'func_miss_hit.txt':
-            with open(path, 'w') as f_write:
-                for key, value in data.items():
-                    temp = str(key) + ":   " + str(value) + "\n"
-                    f_write.write(temp)
-        elif filename == 'total.txt':
-            with open(path, 'w') as f_write:
-                for key, value in data.items():
-                    temp = str(key) + ":   " + str(value) + "\n"
-                    f_write.write(temp) 
-        else:
-            with open(path, 'w') as f_write:
-                for line in data:
-                    f_write.write(line)
-                    f_write.write('\n')
+        with open(path, 'w') as f_write:
+            for key, value in data.items():
+                temp = str(key) + ":   " + str(value) + "\n"
+                f_write.write(temp)
 
     def deal_inst(self, data, size):
         """将指令和地址对应起来"""
@@ -405,7 +420,6 @@ class Gem5DebugMess:
                         if self.icache_cacheline[keys][0] == '1->2':  # 说明此指令是该cache line中cpu访问的第一条指令
                             # 直接让第一条指令的miss数等于上面IF miss的数量，然后将该值清零
                             self.instruction[inst][2] += 1
-                            self.icache_cacheline[keys][2] = 0  # 该cacheline已经被加载到cache中，miss数清零
                             self.icache_cacheline[keys][0] = '2->2'
                         elif self.icache_cacheline[keys][0] == '2->2':
                             # 说明此指令已经在cache中出现过，当该指令再次出现的时候，Hit数+1
@@ -414,7 +428,6 @@ class Gem5DebugMess:
  
 if __name__ == '__main__':
     options = my_args()
-    debug = Gem5DebugMess(options.binary, options.cacheline_size, options.state, 
-                          options.outputfile_path, options.visualfile_dir, options.is_show_rate)
-    # debug = Gem5DebugMess('./debug_static.txt', '0x3f', 'static', './m5out', '1', 'yes')
+    debug = Gem5DebugMess(options.binary, options.cacheline_size, options.outputfile_path, options.visualfile_dir)
+    # debug = Gem5DebugMess('./debug_static.txt', '0x3f', './m5out', '1',)
     debug.process()
