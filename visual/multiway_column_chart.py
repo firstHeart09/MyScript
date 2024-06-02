@@ -13,7 +13,8 @@ def autolabel_portrait(rects, ax):
                     textcoords="offset points",
                     ha='left', va='center')
 
-def visual_portrait():
+# 竖屏显示
+def visual_portrait(self, data, output_dir):
     """
     data：待显示的数据，默认按照字典处理
     output_dir：要保存的可视化的文件路径
@@ -61,6 +62,7 @@ def autolabel_landscape(rects, ax):
                     textcoords="offset points",
                     ha='center', va='bottom')
 
+# 横屏显示
 def visual_landscape():
     """
     data：待显示的数据，默认按照字典处理

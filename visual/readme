@@ -1,4 +1,5 @@
 This folder used to save python scripts about visualizations
 这个文件夹用来保存关于可视化的python脚本代码
 - multiway_column_chart.py: 基础的多路并列柱状图，里面包含横屏柱状图（x轴上是柱状图，y轴是数据）和竖屏柱状图（y轴上是柱状图，x轴是数据）
+- visual_singlefunc_zhexian.py  画出一个测试代码中每个函数的miss和hit数（这里的miss数和hit数指的是所有指令的miss和hit数）
 
