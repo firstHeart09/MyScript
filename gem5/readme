@@ -5,6 +5,8 @@ gem5Mess.sh: 师兄的gem5信息提取的shell脚本
 count_icache_cacheline_hit.py: 统计调试信息中cacheline的hit数
 count_icache_cacheline_miss.py: 统计调试信息中cacheline的miss数
 build_gem5_riscv.sh: 构建gem5的riscv版本
+visual_singlefunc_zhexian.py: 该python代码显示的是gem5提取出来的函数的指令的miss和hit率(折线图)
+visual_single_zhuzhuang.py: 显示每次调试的信息中cacheline的miss率和hit率(柱状图)
 
 """
 命令：python gem5Mess_v3.py --binary=你的路径
@@ -12,20 +14,16 @@ build_gem5_riscv.sh: 构建gem5的riscv版本
 1. --binary一定要指定
 2. 可以通过命令 python gem5Mess_v3.py -h  查看帮助选项如下：
     options:
-    -h, --help            show this help message and exit
-    --cacheline_size [CACHELINE_SIZE]
-                            The size of cacheline. default 64B
-    --binary BINARY       The path of the exec file
-    --state [STATE]       The state of the executable file, if not specified, will be affected during visualization (static and
-                            dynamic file visualization results are different)
-    --outputfile_path [OUTPUTFILE_PATH]
-                            Output file directory, default: m5out
-    --visualfile_dir [VISUALFILE_DIR]
-                            Visual results output directory
-    --is_show_rate [IS_SHOW_RATE]
-                            Whether to display the miss rate and hit rate in the terminal
-3. --state选项指定与否不影响结果，只会对输出信息的命名有影响
-4. 默认输出结果命名为：dynamic_filename.txt   如果指定使用--state=static 则输出结果命名为static_filename.txt
+        -h, --help            show this help message and exit
+        --binary [BINARY]     Path to the binary to execute.
+        --l1i_size L1I_SIZE   L1 instruction cache size. Default: 16kB.
+        --l1d_size L1D_SIZE   L1 data cache size. Default: Default: 64kB.
+        --l2_size L2_SIZE     L2 cache size. Default: 256kB.
+        --clk CLK             CPU clk. Default: 1GHz
+        --cache_line_size CACHE_LINE_SIZE
+                                CPU cache line size. Default: 64B
+
+    注意：--cache_line_size不起作用，需要修改的话，需要到gem5源码中中进行修改
 """
 
 # 处理整个调试信息文件的步骤（主要是调试指令）
