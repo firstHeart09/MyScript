@@ -1,4 +1,11 @@
 该脚本使用教程
+
+gem5Mess.py: 最终的gem5信息提取python代码
+gem5Mess.sh: 师兄的gem5信息提取的shell脚本
+count_icache_cacheline_hit.py: 统计调试信息中cacheline的hit数
+count_icache_cacheline_miss.py: 统计调试信息中cacheline的miss数
+build_gem5_riscv.sh: 构建gem5的riscv版本
+
 """
 命令：python gem5Mess_v3.py --binary=你的路径
 注意：
@@ -55,10 +62,4 @@ instrution{instruction: ['', '', 0, 0]}
 格式：字典  保存cacheline的地址信息，状态以及虚拟地址转换为物理地址（当前cacheline所在的虚拟地址）
 cacheline_dict_hit{cacheline: ['0->1', '0x -> cacheline']}
 cacheline物理地址范围     cacheline状态   cacheline所在物理地址  
-
-
-gem5Mess_v1.py：默认只要有IF miss出现，则该cacheline的第一条指令miss数加一
-                也就是将靠近的时钟周期内的同一个IF miss都算进去
-gem5Mess_v2.py：不将靠近的时钟周期内的同一个IF miss都算进去
-                该计算方法与最后统计的指令数是相同的
                 
