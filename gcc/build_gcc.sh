@@ -17,12 +17,10 @@ cd gcc-13.3.0/
 # 生成ctags标签
 ctags -R
 # 创建build目录
-mkdir myfile && cd myfile
-mkdir build install
-cd build/
+mkdir build && cd cbuild/
 # 安装ubuntu32位开发库
 # sudo apt-get install gcc-multilib g++-multilib
-CFLAGS="-g -O0" CXXFLAGS="-g -O0" ../../configure --prefix=/home/dushuai/binutils/gcc-13.3.0/myfile/install/ --disable-multilib
+CFLAGS="-g -O0" CXXFLAGS="-g -O0" /home/dushuai/binutils/gcc-13.3.0/configure --prefix=/home/dushuai/tools/gcc-13.3.0 --disable-multilib
 make -j$(nproc) && make install
 
 # 清理源码压缩包
