@@ -19,5 +19,5 @@ mkdir build install
 cd build/
 # 安装ubuntu32位开发库
 # sudo apt-get install gcc-multilib g++-multilib
-CFLAGS="-g -O0" CXXFLAGS="-g -O0" ../../configure --prefix=/home/dushuai/binutils/gcc-13.1.0/myfile/install/ --enable-multilib
+CFLAGS="-g -O0" CXXFLAGS="-g -O0" ../../configure --prefix=/home/dushuai/binutils/gcc-13.3.0/myfile/install/ --enable-multilib
 make -j8 && make install
