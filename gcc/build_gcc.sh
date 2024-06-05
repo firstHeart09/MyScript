@@ -2,7 +2,7 @@ cd /home/dushuai/binutils
 # 更新软件源
 # sudo apt update
 # 安装ctags
-sudo apt install universal-ctags
+sudo apt install universal-ctags libgmp-dev libmpfr-dev libmpc-dev libisl-dev zlib1g-dev
 # 下载gcc-13.3.0
 wget -P ~ 'https://mirrors.nju.edu.cn/gnu/gcc/gcc-13.3.0/gcc-13.3.0.tar.gz'
 # 将gcc压缩包移到我的binutils目录中
@@ -20,4 +20,4 @@ cd build/
 # 安装ubuntu32位开发库
 # sudo apt-get install gcc-multilib g++-multilib
 CFLAGS="-g -O0" CXXFLAGS="-g -O0" ../../configure --prefix=/home/dushuai/binutils/gcc-13.3.0/myfile/install/ --enable-multilib
-make -j8 && make install
+make -j$(nproc) && make install
