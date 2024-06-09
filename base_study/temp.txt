@@ -1,2 +1,0 @@
-ls: cannot access '+': No such file or directory
-test tee
