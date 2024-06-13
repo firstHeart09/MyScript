@@ -1,4 +1,5 @@
 cd /home/dushuai/binutils
+rm -rf gcc-13.3.0
 # 更新软件源
 # sudo apt update
 # 安装ctags
