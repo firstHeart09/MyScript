@@ -17,16 +17,16 @@ mkdir -p "$BINUTILS_DIR"
 cd "$BINUTILS_DIR"
 
 # 清理旧文件
-rm -rf glibc-2.35*
+rm -rf glibc-2.23*
 
 # 下载 glibc 源码
-wget http://ftp.gnu.org/pub/gnu/glibc/glibc-2.35.tar.gz
+wget http://ftp.gnu.org/pub/gnu/glibc/glibc-2.23.tar.gz
 
 # 解压并编译安装
-tar -zxf glibc-2.35.tar.gz
-cd glibc-2.35
+tar -zxf glibc-2.23.tar.gz
+cd glibc-2.23
 mkdir -p build && cd build
-../configure --prefix="$HOME/tools/glibc-2.35" \
+../configure --prefix="$HOME/tools/glibc-2.23" \
              CFLAGS="-Og -g -g3 -ggdb -gdwarf-4" \
              CXXFLAGS="-Og -g -g3 -ggdb -gdwarf-4" \
              --disable-werror \
@@ -37,6 +37,6 @@ make -j4
 make install
 
 # 清理无用文件
-rm -rf "$BINUTILS_DIR/glibc-2.35.tar.gz"
+rm -rf "$BINUTILS_DIR/glibc-2.23.tar.gz"
 
-echo "glibc 2.35 安装完成。"
+echo "glibc 2.23 安装完成。"
