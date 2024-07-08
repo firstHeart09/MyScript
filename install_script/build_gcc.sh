@@ -42,7 +42,7 @@ make -j$(nproc) && make install
 
 # 返回 binutils 目录并清理工作目录
 cd "$BINUTILS_DIR"
-rm -rf "$GCC_TAR" gcc-${GCC_VERSION}
+rm -rf "$GCC_TAR"
 
 echo "gcc ${GCC_VERSION} 安装完成。"
 
