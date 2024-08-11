@@ -1,7 +1,0 @@
-     1	chapter_one_1.sh
-     2	chapter_one_array.sh
-     3	chapter_one_debug.sh
-     4	chapter_one.sh
-     5	chapter_one_test.sh
-     6	out.txt
-     7	readme

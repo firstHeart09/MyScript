@@ -1,0 +1,6 @@
+this is the original text
+lin2
+lin3
+lin4
+happy hacking!
+GNU is not UNIX!
