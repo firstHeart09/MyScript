@@ -18,7 +18,6 @@ cd "$BINUTILS_DIR"
 
 # 清理旧文件
 rm -rf glibc-2.40*
-
 # 下载 glibc 源码
 wget http://ftp.gnu.org/pub/gnu/glibc/glibc-2.40.tar.gz
 
@@ -33,7 +32,7 @@ mkdir -p build && cd build
              --enable-debug \
              --enable-debuginfod
 
-make -j4
+make -j1
 make install
 
 # 清理无用文件
