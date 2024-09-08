@@ -11,7 +11,7 @@ sudo apt-get install --reinstall libc6-dev
 # 设置工作目录和版本号
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BINUTILS_DIR="$HOME/source"
-GCC_VERSION="14.1.0"
+GCC_VERSION="14.2.0"
 GCC_TAR="gcc-${GCC_VERSION}.tar.gz"
 GCC_URL="https://mirrors.nju.edu.cn/gnu/gcc/gcc-${GCC_VERSION}/${GCC_TAR}"
 

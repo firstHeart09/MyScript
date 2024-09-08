@@ -28,7 +28,7 @@ tar -xzvf "$BINUTILS_TAR"
 cd "binutils-${BINUTILS_VERSION}"
 
 # 配置、编译和安装
-CFLAGS="-g" ./configure --prefix="$HOME/tools/binutils-${BINUTILS_VERSION}" --enable-debug
+CFLAGS="-g" ./configure --prefix="$HOME/tools/binutils-${BINUTILS_VERSION}" --enable-debug --enable-gold
 make
 make install
 
