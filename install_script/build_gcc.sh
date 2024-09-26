@@ -40,7 +40,10 @@ ctags -R
 mkdir build && cd build
 
 # 配置、编译和安装 gcc
-CFLAGS="-g -O0" CXXFLAGS="-g -O0" ../configure --prefix="$HOME/tools/gcc-${GCC_VERSION}" --disable-multilib
+CFLAGS="-g -O0 -fPIC" CXXFLAGS="-g -O0 -fPIC" ../configure --prefix="$HOME/tools/gcc-${GCC_VERSION}" \
+    --disable-multilib --with-ld="${HOME}/source/binutils-2.42/ld/ld-new" --enable-shared --enable-PIE
+# 使用自定义LD
+# CFLAGS="-O0 -g" CXXFLAGS="-O0 -g" LDFLAGS="-B /home/dushuai/source/binutils-2.42/ld/ld-new" ../configure --prefix="${HOME}/tools/gcc-14.2.0" --disable-multilib
 make -j$(nproc) && make install
 
 # 清理下载的文件和源码目录
